@@ -1,58 +1,57 @@
 from flask import Flask, render_template, request, redirect
 import sqlite3
-from datetime import datetime
+import os
 
 app = Flask(__name__)
 
+# 🔧 Create table if it doesn't exist
 def init_db():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('log.db')
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS equipment (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT,
-        type TEXT,
-        usage INTEGER,
-        maintenance_date TEXT
-    )''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS equipment (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            model TEXT NOT NULL,
+            location TEXT NOT NULL,
+            date TEXT NOT NULL
+        )
+    ''')
     conn.commit()
     conn.close()
 
-@app.route('/', methods=['GET', 'POST'])
+# 🔁 Homepage: View logs
+@app.route('/')
 def index():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect('log.db')
     c = conn.cursor()
-
-    if request.method == 'POST':
-        name = request.form['name']
-        type_ = request.form['type']
-        usage = request.form['usage']
-        date = request.form['maintenance_date']
-        c.execute("INSERT INTO equipment (name, type, usage, maintenance_date) VALUES (?, ?, ?, ?)",
-                  (name, type_, usage, date))
-        conn.commit()
-        return redirect('/')
-
     c.execute("SELECT * FROM equipment")
     rows = c.fetchall()
     conn.close()
+    return render_template('index.html', data=rows)
 
-    alert_rows = []
-    for row in rows:
-        last_date = datetime.strptime(row[4], "%Y-%m-%d")
-        days = (datetime.today() - last_date).days
-        if days > 30:
-            status = " Due"
-        elif days > 20:
-            status = " Soon"
-        else:
-            status = "OK"
-        alert_rows.append((*row, status))
+# ➕ Add log
+@app.route('/add', methods=['POST'])
+def add():
+    name = request.form['name']
+    model = request.form['model']
+    location = request.form['location']
+    date = request.form['date']
 
-    return render_template('index.html', equipment=alert_rows)
+    conn = sqlite3.connect('log.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)",
+              (name, model, location, date))
+    conn.commit()
+    conn.close()
+    return redirect('/')
 
-import os
+# 🔁 Create table on startup
+init_db()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+   import os
 
+if __name__ == '__main__':
+    port = int(os.environ.get('PORT', 10000))  # default to 10000 for local testing
+    app.run(host='0.0.0.0', port=port)
