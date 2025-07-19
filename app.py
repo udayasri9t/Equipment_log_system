@@ -69,12 +69,40 @@ def add():
     conn.close()
     return redirect('/')
 
+@app.route("/add-sample")
+def add_sample():
+    conn = sqlite3.connect('log.db')
+    c = conn.cursor()
+    c.execute("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)",
+              ("Compressor", "CMP-9000", "Bay 2", "2025-07-18"))
+    c.execute("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)",
+              ("Welder", "WLD-X1", "Workshop", "2025-06-25"))
+    c.execute("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)",
+              ("Pump", "PMP-300", "Underground", "2025-07-01"))
+    conn.commit()
+    conn.close()
+    return "Sample data inserted successfully!"
+
+
 # 🔁 Create table on startup
-init_db()
+def init_db():
+    conn = sqlite3.connect('log.db')
+    c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS equipment (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        model TEXT NOT NULL,
+        location TEXT NOT NULL,
+        date TEXT NOT NULL
+    )''')
+    conn.commit()
+    conn.close()
+
 
 if __name__ == '__main__':
    import os
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 10000))  # default to 10000 for local testing
-    app.run(host='0.0.0.0', port=port)
+    print("✅ Starting app...")
+    init_db()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 10000)))
