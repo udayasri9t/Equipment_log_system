@@ -8,6 +8,8 @@ app = Flask(__name__)
 def init_db():
     conn = sqlite3.connect('log.db')
     c = conn.cursor()
+
+    # Create the table if it doesn't exist
     c.execute('''
         CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -17,8 +19,23 @@ def init_db():
             date TEXT NOT NULL
         )
     ''')
+
+    # Check if table is empty
+    c.execute("SELECT COUNT(*) FROM equipment")
+    if c.fetchone()[0] == 0:
+        # Insert default data
+        default_data = [
+            ("Drill Press", "DP-450", "Factory A", "2025-07-18"),
+            ("CNC Machine", "CNC-X21", "Workshop 3", "2025-07-18"),
+            ("Welder", "WELD-32", "Maintenance", "2025-07-17"),
+            ("Lathe", "LATHE-M2", "Factory B", "2025-07-16"),
+            ("Forklift", "FLK-900", "Warehouse", "2025-07-15")
+        ]
+        c.executemany("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)", default_data)
+
     conn.commit()
     conn.close()
+
 
 # 🔁 Homepage: View logs
 @app.route('/')
