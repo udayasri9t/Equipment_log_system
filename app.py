@@ -6,10 +6,11 @@ app = Flask(__name__)
 
 # 🔧 Create table if it doesn't exist
 def init_db():
-    conn = sqlite3.connect('log.db')
+    db_path = 'log.db'
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
 
-    # Create the table if it doesn't exist
+    # Create table if it doesn't exist
     c.execute('''
         CREATE TABLE IF NOT EXISTS equipment (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -22,8 +23,10 @@ def init_db():
 
     # Check if table is empty
     c.execute("SELECT COUNT(*) FROM equipment")
-    if c.fetchone()[0] == 0:
-        # Insert default data
+    count = c.fetchone()[0]
+
+    if count == 0:
+        print("Inserting default data...")
         default_data = [
             ("Drill Press", "DP-450", "Factory A", "2025-07-18"),
             ("CNC Machine", "CNC-X21", "Workshop 3", "2025-07-18"),
@@ -32,8 +35,11 @@ def init_db():
             ("Forklift", "FLK-900", "Warehouse", "2025-07-15")
         ]
         c.executemany("INSERT INTO equipment (name, model, location, date) VALUES (?, ?, ?, ?)", default_data)
+        conn.commit()
+        print("Default data inserted!")
+    else:
+        print("Database already has data. Skipping insert.")
 
-    conn.commit()
     conn.close()
 
 
