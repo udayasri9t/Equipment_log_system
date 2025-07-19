@@ -69,7 +69,7 @@ def add():
     conn.close()
     return redirect('/')
 
-@app.route("/add-sample")
+@app.route('/', methods=['GET', 'POST'])
 def add_sample():
     conn = sqlite3.connect('log.db')
     c = conn.cursor()
